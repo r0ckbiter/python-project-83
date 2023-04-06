@@ -34,6 +34,26 @@ optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 
 [[package]]
+name = "datetime"
+version = "5.1"
+description = "This package provides a DateTime data type, as known from Zope. Unless you need to communicate with Zope APIs, you're probably better off using Python's built-in datetime module."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+pytz = "*"
+"zope.interface" = "*"
+
+[[package]]
+name = "decorator"
+version = "5.1.1"
+description = "Decorators for Humans"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+
+[[package]]
 name = "exceptiongroup"
 version = "1.1.1"
 description = "Backport of PEP 654 (exception groups)"
@@ -156,6 +176,14 @@ dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
+name = "psycopg2-binary"
+version = "2.9.6"
+description = "psycopg2 - Python-PostgreSQL Database Adapter"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
 name = "pycodestyle"
 version = "2.10.0"
 description = "Python style guide checker"
@@ -203,12 +231,34 @@ python-versions = ">=3.8"
 cli = ["click (>=5.0)"]
 
 [[package]]
+name = "pytz"
+version = "2023.3"
+description = "World timezone definitions, modern and historical"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
 category = "main"
 optional = false
 python-versions = ">=3.7"
+
+[[package]]
+name = "validators"
+version = "0.20.0"
+description = "Python Data Validation for Humans™."
+category = "main"
+optional = false
+python-versions = ">=3.4"
+
+[package.dependencies]
+decorator = ">=3.4.0"
+
+[package.extras]
+test = ["pytest (>=2.2.3)", "flake8 (>=2.4.0)", "isort (>=4.2.2)"]
 
 [[package]]
 name = "werkzeug"
@@ -224,15 +274,30 @@ MarkupSafe = ">=2.1.1"
 [package.extras]
 watchdog = ["watchdog"]
 
+[[package]]
+name = "zope.interface"
+version = "6.0"
+description = "Interfaces for Python"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+docs = ["sphinx", "repoze.sphinx.autointerface"]
+test = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
+testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "3dcd250c55a6b66200b038a9470e3bcb3f8c1b453878be726fb206f24380f9ff"
+content-hash = "25192c8cff4c78ac44f2990871926b15dffd0c472de355c7db21fbefa529cf7a"
 
 [metadata.files]
 attrs = []
 click = []
 colorama = []
+datetime = []
+decorator = []
 exceptiongroup = []
 flake8 = []
 flask = []
@@ -244,9 +309,13 @@ markupsafe = []
 mccabe = []
 packaging = []
 pluggy = []
+psycopg2-binary = []
 pycodestyle = []
 pyflakes = []
 pytest = []
 python-dotenv = []
+pytz = []
 tomli = []
+validators = []
 werkzeug = []
+"zope.interface" = []
