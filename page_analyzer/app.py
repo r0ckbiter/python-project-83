@@ -1,6 +1,7 @@
 import os
 
 import psycopg2
+import requests
 from flask import (
     Flask,
     render_template,
@@ -100,12 +101,39 @@ def show_urls():
     conn = connect()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     cursor.execute("""
-        SELECT *
-        FROM urls
-        ORDER BY created_at DESC
+        SELECT
+            u.id,
+            u.name,
+            u.created_at
+        FROM urls as u
+        LEFT JOIN url_checks as checks
+        ON u.id = checks.url_id
+        AND checks.created_at =
+            (SELECT MAX(created_at) FROM url_checks
+            WHERE url_id = u.id)
+        ORDER BY u.created_at DESC
         """,
                    )
     urls = cursor.fetchall()
     cursor.close()
     conn.close()
     return render_template('/urls.html', urls=urls)
+
+
+@app.post('/urls/<int:url_id>/checks')
+def check_url(url_id):
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute('SELECT name FROM urls WHERE id = %s LIMIT 1', (url_id,))
+    url_for_check = cursor.fetchall()[0][0]
+    try:
+        response = requests.get(url_for_check)
+        response.raise_for_status()
+    except requests.exceptions.RequestException:
+        conn.close()
+        flash('Ошибка при проверке', 'danger')
+        return redirect(url_for('show_url', url_id=url_id))
+    conn.commit()
+    conn.close()
+    flash('Страница успешно проверена', 'success')
+    return redirect(url_for('show_url', url_id=url_id))
