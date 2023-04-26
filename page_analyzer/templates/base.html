@@ -20,8 +20,14 @@
 </nav>
   </header>
 
-  {% block content %}
-  {% endblock %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+{% endfor %}
+{% endif %}
+
+{% block content %}
+{% endblock %}
 
   <footer class="border-top py-3 mt-5 flex-shrink-0">
   <div class="container-lg">

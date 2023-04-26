@@ -1,5 +1,6 @@
 import os
 
+from bs4 import BeautifulSoup
 import psycopg2
 import requests
 from flask import (
@@ -78,9 +79,9 @@ def show_url(url_id):
     cursor.execute("""
                     SELECT
                         id, name, created_at::date
-                    FROM urls
-                    WHERE urls.id = %s
-                    LIMIT 1""",
+                        FROM urls
+                        WHERE urls.id = %s
+                        LIMIT 1""",
                    (url_id,)
                    )
     result = cursor.fetchall()
@@ -89,9 +90,23 @@ def show_url(url_id):
         conn.close()
         return render_template('/404.html'), 404
 
+    cursor.execute("""
+                    SELECT
+                        id, status_code, h1, title,
+                        description, created_at::date
+                    FROM url_checks
+                    WHERE url_checks.url_id = %s
+                    ORDER BY id DESC;
+                    """,
+                   (url_id,)
+                   )
+    checks = cursor.fetchall()
+    cursor.close()
+    conn.close()
     return render_template(
         '/url_info.html',
         url=result[0],
+        checks=checks,
         messages=get_flashed_messages(with_categories=True),
     )
 
@@ -102,16 +117,23 @@ def show_urls():
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     cursor.execute("""
         SELECT
-            u.id,
-            u.name,
-            u.created_at
-        FROM urls as u
-        LEFT JOIN url_checks as checks
-        ON u.id = checks.url_id
-        AND checks.created_at =
-            (SELECT MAX(created_at) FROM url_checks
-            WHERE url_id = u.id)
-        ORDER BY u.created_at DESC
+            urls.id,
+            urls.name,
+            coalesce(checks.created_at::date::text, '') as created_at,
+            coalesce(checks.status_code::text, '') as status_code
+        FROM urls
+        LEFT JOIN (
+            SELECT
+                url_id,
+                created_at,
+                status_code
+                FROM url_checks
+                ) as checks
+            ON urls.id = checks.url_id
+            AND checks.created_at =
+                (SELECT MAX(created_at) FROM url_checks
+            WHERE url_id = urls.id)
+        ORDER BY urls.created_at DESC
         """,
                    )
     urls = cursor.fetchall()
@@ -131,8 +153,23 @@ def check_url(url_id):
         response.raise_for_status()
     except requests.exceptions.RequestException:
         conn.close()
-        flash('Ошибка при проверке', 'danger')
+        flash('произошла ошибка при проверке', 'danger')
         return redirect(url_for('show_url', url_id=url_id))
+
+    status_code = response.status_code
+    parsed_page = BeautifulSoup(response.text, 'html.parser')
+    title = parsed_page.title.text if parsed_page.find('title') else ''
+    h1 = parsed_page.h1.text if parsed_page.find('h1') else ''
+    description = parsed_page.find('meta', attrs={'name': 'description'})
+    description = description.get('content') if description else ''
+
+    cursor.execute("""
+        INSERT INTO url_checks
+            (url_id, status_code, title, h1, description)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+                   (url_id, status_code, title, h1, description),
+                   )
     conn.commit()
     conn.close()
     flash('Страница успешно проверена', 'success')
